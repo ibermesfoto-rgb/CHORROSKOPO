@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CHORROSKOPO — El horóscopo sin filtros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple: #a855f7;
+    --pink: #ec4899;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
+    --bg: #07000f;
+    --card: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.1);
+    --text: rgba(255,255,255,0.88);
+    --muted: rgba(255,255,255,0.45);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* STARS CANVAS */
+  #stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+  /* GLOW ORBS */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb1 { width: 500px; height: 500px; background: rgba(168,85,247,0.12); top: -100px; left: -100px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(236,72,153,0.1); bottom: 100px; right: -100px; }
+  .orb3 { width: 300px; height: 300px; background: rgba(59,130,246,0.08); top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+  /* LAYOUT */
+  .page { position: relative; z-index: 1; max-width: 580px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 60px 0 40px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 15vw, 96px);
+    letter-spacing: 4px;
+    line-height: 1;
+    background: linear-gradient(135deg, #ff6fd8 0%, #a855f7 40%, #3b82f6 80%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: logoPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes logoPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.15); }
+  }
+
+  .tagline {
+    font-size: 15px;
+    color: var(--muted);
+    margin-top: 10px;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  .pill {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(236,72,153,0.3));
+    border: 0.5px solid rgba(168,85,247,0.4);
+    color: #d8b4fe;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 18px;
+    border-radius: 999px;
+    margin-top: 14px;
+    letter-spacing: 0.04em;
+  }
+
+  .social-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* STATS */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: #d8b4fe;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* FORM CARD */
+  .card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .field { margin-bottom: 22px; }
+  .field:last-child { margin-bottom: 0; }
+
+  input[type="text"] {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 16px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  input[type="text"]::placeholder { color: rgba(255,255,255,0.25); }
+  input[type="text"]:focus { border-color: var(--purple); background: rgba(168,85,247,0.08); }
+
+  /* SIGNS GRID */
+  .signs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .sign {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 12px 4px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .sign:hover { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.3); }
+
+  .sign.sel {
+    background: rgba(168,85,247,0.2);
+    border-color: var(--purple);
+    box-shadow: 0 0 12px rgba(168,85,247,0.2);
+  }
+
+  .sign-emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+  .sign-name { font-size: 10px; color: var(--muted); letter-spacing: 0.02em; }
+  .sign.sel .sign-name { color: #d8b4fe; }
+
+  /* BUTTON */
+  .btn-main {
+    width: 100%;
+    padding: 17px;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    background: linear-gradient(135deg, #7c3aed, #ec4899, #f59e0b);
+    background-size: 200% 200%;
+    color: white;
+    letter-spacing: 0.01em;
+    margin-top: 22px;
+    transition: opacity 0.15s, transform 0.1s;
+    animation: btnShift 4s ease infinite;
+  }
+
+  @keyframes btnShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .btn-main:hover { opacity: 0.9; transform: scale(1.01); }
+  .btn-main:active { transform: scale(0.98); }
+  .btn-main:disabled { opacity: 0.3; cursor: not-allowed; transform: none; animation: none; }
+
+  /* RESULT */
+  .result-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    display: none;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .avatar {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .res-name { font-size: 20px; font-weight: 500; }
+  .res-sign { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  /* LOADING DOTS */
+  .dots { display: flex; gap: 6px; padding: 8px 0; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    animation: dotPulse 1.2s ease-in-out infinite;
+  }
+  .dot:nth-child(1) { background: var(--purple); }
+  .dot:nth-child(2) { background: var(--pink); animation-delay: 0.2s; }
+  .dot:nth-child(3) { background: var(--amber); animation-delay: 0.4s; }
+
+  @keyframes dotPulse {
+    0%, 80%, 100% { transform: scale(0.5); opacity: 0.3; }
+    40% { transform: scale(1.1); opacity: 1; }
+  }
+
+  .horoscope-text {
+    font-size: 15px;
+    line-height: 1.85;
+    color: rgba(255,255,255,0.82);
+    white-space: pre-wrap;
+    min-height: 40px;
+  }
+
+  /* PAY SECTION */
+  .pay-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .pay-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+  .pay-desc { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+
+  .pay-row { display: flex; gap: 10px; }
+
+  .btn-pay {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn-pay:hover { opacity: 0.88; transform: scale(1.01); }
+  .btn-pay:active { transform: scale(0.97); }
+
+  .btn-share {
+    padding: 14px 18px;
+    border: 0.5px solid rgba(255,255,255,0.18);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-share:hover { background: rgba(255,255,255,0.06); color: white; }
+
+  /* TESTIMONIALS */
+  .testimonials { margin-top: 32px; }
+  .testi-title { font-size: 12px; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+
+  .testi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .testi {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .testi-stars { color: var(--amber); font-size: 11px; margin-bottom: 6px; }
+  .testi-text { font-size: 12px; color: var(--muted); line-height: 1.5; font-style: italic; }
+  .testi-author { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 6px; }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    margin-top: 32px;
+    line-height: 1.6;
+    padding: 0 10px;
+  }
+
+  /* MOBILE */
+  @media (max-width: 420px) {
+    .signs { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .sign { padding: 10px 2px 8px; }
+    .sign-emoji { font-size: 18px; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="logo">CHORROSKOPO</div>
+    <div class="tagline">El horóscopo que nadie pidió pero todos necesitan</div>
+    <div class="pill">✦ Powered por IA · Sin filtros · Sin mentiras ✦</div>
+    <div class="social-row">
+      <span class="badge" id="counter-badge">12.847 almas destruidas</span>
+      <span class="badge">4.9 / 5 estrellas</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="counter-hoy">247</div>
+      <div class="stat-label">hoy</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">2€</div>
+      <div class="stat-label">precio del destino</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0</div>
+      <div class="stat-label">filtros usados</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <div class="field-label">Tu nombre</div>
+      <input type="text" id="nombre" placeholder="¿Cómo te llaman?" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Tu signo</div>
+      <div class="signs" id="signs-grid">
+        <div class="sign" data-sign="Aries" data-emoji="♈"><span class="sign-emoji">♈</span><span class="sign-name">Aries</span></div>
+        <div class="sign" data-sign="Tauro" data-emoji="♉"><span class="sign-emoji">♉</span><span class="sign-name">Tauro</span></div>
+        <div class="sign" data-sign="Géminis" data-emoji="♊"><span class="sign-emoji">♊</span><span class="sign-name">Géminis</span></div>
+        <div class="sign" data-sign="Cáncer" data-emoji="♋"><span class="sign-emoji">♋</span><span class="sign-name">Cáncer</span></div>
+        <div class="sign" data-sign="Leo" data-emoji="♌"><span class="sign-emoji">♌</span><span class="sign-name">Leo</span></div>
+        <div class="sign" data-sign="Virgo" data-emoji="♍"><span class="sign-emoji">♍</span><span class="sign-name">Virgo</span></div>
+        <div class="sign" data-sign="Libra" data-emoji="♎"><span class="sign-emoji">♎</span><span class="sign-name">Libra</span></div>
+        <div class="sign" data-sign="Escorpio" data-emoji="♏"><span class="sign-emoji">♏</span><span class="sign-name">Escorpio</span></div>
+        <div class="sign" data-sign="Sagitario" data-emoji="♐"><span class="sign-emoji">♐</span><span class="sign-name">Sagitario</span></div>
+        <div class="sign" data-sign="Capricornio" data-emoji="♑"><span class="sign-emoji">♑</span><span class="sign-name">Capricornio</span></div>
+        <div class="sign" data-sign="Acuario" data-emoji="♒"><span class="sign-emoji">♒</span><span class="sign-name">Acuario</span></div>
+        <div class="sign" data-sign="Piscis" data-emoji="♓"><span class="sign-emoji">♓</span><span class="sign-name">Piscis</span></div>
+      </div>
+    </div>
+    <button class="btn-main" id="gen-btn" disabled>Consultar los astros</button>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <div class="result-header">
+      <div class="avatar" id="res-avatar"></div>
+      <div>
+        <div class="res-name" id="res-name"></div>
+        <div class="res-sign" id="res-sign"></div>
+      </div>
+    </div>
+    <div class="horoscope-text" id="horoscope-text"></div>
+    <div class="pay-section">
+      <div class="pay-title">¿Quieres saber lo que te espera esta semana?</div>
+      <div class="pay-desc">Horóscopo semanal completo + PDF descargable para mandárselo a quien quieras. Solo 2€ — menos que un café.</div>
+      <div class="pay-row">
+        <button class="btn-pay" id="btn-pay">Desbloquear por 2€ ✦</button>
+        <button class="btn-share" id="btn-share">Compartir</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="testimonials">
+    <div class="testi-title">Lo que dicen los que ya lo probaron</div>
+    <div class="testi-grid">
+      <div class="testi">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Me dijo que iba a mandar un audio de 4 minutos cuando podía llamar. Llevaba 3 años haciéndolo."</div>
+        <div class="testi-author">— Laura, Escorpio</div>
+      </div>
+      <div class="testi">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Los astros me llamaron vago de 5 formas distintas. Todas correctas."</div>
+        <div class="testi-author">— Marcos, Sagitario</div>
+      </div>
+      <div class="testi">
+        <div class="testi-stars">★★★★☆</div>
+        <div class="testi-text">"Me quitó una estrella porque me dijo verdades que no quería escuchar."</div>
+        <div class="testi-author">— Ana, Libra</div>
+      </div>
+      <div class="testi">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Lo mandé a mi ex. Me bloqueó. 10/10 recomendaría."</div>
+        <div class="testi-author">— Javi, Aries</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">Los astros no se hacen responsables de crisis existenciales, rupturas sentimentales<br/>ni abandono del trabajo provocados por este horóscopo. Leer bajo tu propia responsabilidad cósmica.</div>
+
+</div>
+
+<script>
+(function() {
+  const STRIPE_LINK = 'https://buy.stripe.com/5kQ4gz4y6h1b75T8uM1ZS01';
+  const API_KEY = 'pk_live_51Tg0FzI4m0MeOWaEGfrQ0OSHoHglYMMZv0yklhn5rIbVYtteKP2w0pQnLBNyn4TxLT53fQmnzWe9uIw8MHqj2kzl00YILXYrkA';
+
+  // Stars canvas
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < 120; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.5 + 0.3,
+        o: Math.random() * 0.6 + 0.1,
+        speed: Math.random() * 0.3 + 0.05
+      });
+    }
+  }
+
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${s.o})`;
+      ctx.fill();
+      s.o += Math.sin(Date.now() * s.speed * 0.001) * 0.005;
+      s.o = Math.max(0.05, Math.min(0.7, s.o));
+    });
+    requestAnimationFrame(drawStars);
+  }
+
+  resizeCanvas();
+  initStars();
+  drawStars();
+  window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+  // Counter
+  let counter = 247;
+  setInterval(() => {
+    if (Math.random() < 0.25) {
+      counter++;
+      document.getElementById('counter-hoy').textContent = counter;
+    }
+  }, 7000);
+
+  // Sign selection
+  let selectedSign = null, selectedEmoji = null, lastText = '';
+
+  document.querySelectorAll('.sign').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sign').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      selectedSign = btn.dataset.sign;
+      selectedEmoji = btn.dataset.emoji;
+      checkReady();
+    });
+  });
+
+  document.getElementById('nombre').addEventListener('input', checkReady);
+
+  function checkReady() {
+    const n = document.getElementById('nombre').value.trim();
+    document.getElementById('gen-btn').disabled = !(n && selectedSign);
+  }
+
+  // Generate horoscope
+  document.getElementById('gen-btn').addEventListener('click', async () => {
+    const nombre = document.getElementById('nombre').value.trim();
+    const btn = document.getElementById('gen-btn');
+    const resultCard = document.getElementById('result-card');
+    const horoscopeEl = document.getElementById('horoscope-text');
+
+    btn.disabled = true;
+    btn.textContent = 'Los astros están pensando...';
+    resultCard.style.display = 'block';
+    resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    document.getElementById('res-avatar').textContent = selectedEmoji;
+    document.getElementById('res-name').textContent = nombre;
+    document.getElementById('res-sign').textContent = selectedSign + ' · ' + new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+
+    horoscopeEl.innerHTML = '<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    lastText = '';
+
+    const prompt = `Eres el astrólogo más sarcástico, atrevido y divertido de España. Escribe un horóscopo diario personalizado para ${nombre}, signo ${selectedSign}.
+
+Reglas:
+- 3 párrafos cortos y directos
+- Mezcla predicciones absurdas con verdades universales dolorosas (el móvil, procrastinar, relaciones, trabajo, redes sociales)
+- Menciona el nombre ${nombre} al menos dos veces de forma natural
+- Explota los clichés de ${selectedSign} de forma exagerada y graciosa
+- Tono: amigo que te quiere pero no te va a mentir, un poco cruel pero con cariño
+- Al final una "suerte del día": algo completamente ridículo que les traerá suerte
+- Escribe en español de España, coloquial y directo
+- Máximo 160 palabras en total
+- Sin asteriscos ni markdown`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          stream: true,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      horoscopeEl.textContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                lastText += parsed.delta.text;
+                horoscopeEl.textContent = lastText;
+              }
+            } catch (e) {}
+          }
+        }
+      }
+    } catch (e) {
+      horoscopeEl.textContent = 'Mercurio retrógrado ha tirado los servidores. Inténtalo de nuevo en unos segundos.';
+    }
+
+    btn.textContent = 'Consultar los astros';
+    btn.disabled = false;
+    checkReady();
+    counter++;
+    document.getElementById('counter-hoy').textContent = counter;
+  });
+
+  // Stripe payment
+  document.getElementById('btn-pay').addEventListener('click', () => {
+    window.open(STRIPE_LINK, '_blank');
+  });
+
+  // Share
+  document.getElementById('btn-share').addEventListener('click', () => {
+    const nombre = document.getElementById('nombre').value.trim();
+    const text = `Mi horóscopo de hoy en CHORROSKOPO:\n\n${lastText}\n\n¿Quieres el tuyo? chorroskopo.com`;
+    if (navigator.share) {
+      navigator.share({ title: 'Mi Chorroskopo', text });
+    } else {
+      navigator.clipboard.writeText(text).then(() => alert('¡Copiado! Pégalo donde quieras.'));
+    }
+  });
+})();
+</script>
+</body>
+</html>
